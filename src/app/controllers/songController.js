@@ -20,8 +20,8 @@ class SongController {
         newSong
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -37,12 +37,8 @@ class SongController {
         songs
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      const customError = new ApiError(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        errMessage
-      );
-      next(customError);
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -53,7 +49,7 @@ class SongController {
 
       // validate songId
       if (!mongoose.Types.ObjectId.isValid(songId)) {
-        return next(new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID"));
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID");
       }
 
       const song = await Song.findById(songId);
@@ -65,8 +61,8 @@ class SongController {
         song
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -78,7 +74,7 @@ class SongController {
 
       // validate songId
       if (!mongoose.Types.ObjectId.isValid(songId)) {
-        return next(new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID"));
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID");
       }
 
       const newSong = await Song.findByIdAndUpdate(songId, updateData, {
@@ -87,8 +83,8 @@ class SongController {
 
       ApiResponse.success(res, StatusCodes.OK, "Update successful", newSong);
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -99,7 +95,7 @@ class SongController {
 
       // validate songId
       if (!mongoose.Types.ObjectId.isValid(songId)) {
-        return next(new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID"));
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID");
       }
 
       await Song.findByIdAndDelete(songId);
@@ -111,8 +107,8 @@ class SongController {
         null
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 }

@@ -19,14 +19,12 @@ const validateEmail = async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return next(
-        new ApiError(StatusCodes.BAD_REQUEST, "Email is already in use.")
-      );
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Email is already in use.");
     }
     next();
   } catch (error) {
-    const errMessage = new Error(error).message;
-    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    next(new ApiError(statusCode, error.message));
   }
 };
 

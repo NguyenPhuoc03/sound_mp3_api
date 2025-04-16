@@ -1,15 +1,22 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 const albumController = require("../app/controllers/albumController");
-const auth = require("../middlewares/authMiddleware");
+const permissionMiddleware = require("../middlewares/permissionMiddleware"); // phân quyền
 
-//router.use(auth);
+router.get("/get-all", albumController.getAlbums);
+router.get("/:albumId", albumController.getAlbumById);
 
-router.post('/create', albumController.createAlbum);
-router.get('/get-all', albumController.getAlbums);
-router.get('/:albumId', albumController.getAlbumById);
-router.patch('/:albumId', albumController.updateAlbumById);
-router.delete('/:albumId', albumController.deleteAlbumById);
+router.post("/create", permissionMiddleware, albumController.createAlbum);
+router.patch(
+  "/:albumId",
+  permissionMiddleware,
+  albumController.updateAlbumById
+);
+router.delete(
+  "/:albumId",
+  permissionMiddleware,
+  albumController.deleteAlbumById
+);
 
 module.exports = router;

@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const User = new Schema(
   {
     email: { type: String, required: true },
-    password: { type: String, required: true },
+    password: { type: String, required: true, select: false },
     name: { type: String, required: true },
     image: { type: String, default: "" },
     likedArtists: {

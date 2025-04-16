@@ -1,8 +1,8 @@
+require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
 const db = require("./config/db/connectDatabase");
-const port = 3000;
 
 const route = require("./routes/index");
 const {
@@ -23,6 +23,6 @@ route(app);
 // middleware xu li loi
 app.use(errorHandlingMiddleware);
 
-app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+app.listen(process.env.PORT, () => {
+  console.log(`App listening at http://localhost:${process.env.PORT}`);
 });

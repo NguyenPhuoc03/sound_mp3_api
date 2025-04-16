@@ -20,8 +20,8 @@ class AlbumController {
         newAlbum
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -37,12 +37,8 @@ class AlbumController {
         albums
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      const customError = new ApiError(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        errMessage
-      );
-      next(customError);
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -53,7 +49,7 @@ class AlbumController {
 
       // validate albumId
       if (!mongoose.Types.ObjectId.isValid(albumId)) {
-        return next(new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID"));
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID");
       }
 
       const album = await Album.findById(albumId);
@@ -65,8 +61,8 @@ class AlbumController {
         album
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -78,7 +74,7 @@ class AlbumController {
 
       // validate albumId
       if (!mongoose.Types.ObjectId.isValid(albumId)) {
-        return next(new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID"));
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID");
       }
 
       const newAlbum = await Album.findByIdAndUpdate(albumId, updateData, {
@@ -87,8 +83,8 @@ class AlbumController {
 
       ApiResponse.success(res, StatusCodes.OK, "Update successful", newAlbum);
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -99,7 +95,7 @@ class AlbumController {
 
       // validate albumId
       if (!mongoose.Types.ObjectId.isValid(albumId)) {
-        return next(new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID"));
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID");
       }
 
       await Album.findByIdAndDelete(albumId);
@@ -111,8 +107,8 @@ class AlbumController {
         null
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 }

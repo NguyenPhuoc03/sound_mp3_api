@@ -1,35 +1,61 @@
 const mongoose = require("mongoose");
 const { StatusCodes } = require("http-status-codes");
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
 
 const User = require("../models/User");
 const ApiError = require("../../utils/ApiError");
 const ApiResponse = require("../../utils/ApiResponse");
 
 class UserController {
-  //! [POST] /register
-  // async register(req, res, next) {
-  //   try {
-  //     const insertData = req.body;
+  //! [GET] user/profile
+  async profile(req, res, next) {
+    try {
+      const user = await User.findById(req.user.id);
 
-  //     // hash password
-  //     insertData.password = await bcrypt.hash(insertData.password, saltRounds,);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+      }
 
-  //     // create instance
-  //     const newUser = new User(insertData);
-  //     const saveUser = await newUser.save();
+      ApiResponse.success(res, StatusCodes.OK, "Get user successfully", user);
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
 
-  //     ApiResponse.success(
-  //       res,
-  //       StatusCodes.CREATED,
-  //       "New account created successfully",
-  //       saveUser
-  //     );
-  //   } catch (error) {
-  //     const errMessage = new Error(error).message;
-  //     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
-  //   }
-  // }
+  //! [PATCH] user/update-user
+  async updateUser(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const updateData = req.body;
+
+      const newUser = await User.findByIdAndUpdate(userId, updateData, {
+        new: true,
+      });
+
+      ApiResponse.success(res, StatusCodes.OK, "Update successful", newUser);
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
+
+  //! [DELETE] user/delete-user
+  async deleteUser(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+      }
+
+      await User.findByIdAndDelete(userId);
+
+      ApiResponse.success(res, StatusCodes.OK, "Deleted successfully", null);
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
 }
+
 module.exports = new UserController();

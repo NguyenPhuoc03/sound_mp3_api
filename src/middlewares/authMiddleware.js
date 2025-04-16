@@ -5,22 +5,24 @@ const { StatusCodes } = require("http-status-codes");
 
 const ApiError = require("../utils/ApiError");
 
-const auth = (req, res, next) => {
-  if (req.headers && req.headers.authorization) {
-    const token = req.headers.authorization.split(" ")[1];
+const authMiddleware = (req, res, next) => {
+  const token = req.headers?.authorization?.split(" ")[1];
 
-    //verify token
-    try {
-      const decode = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("decode:", decode);
+  // kiem tra token
+  if (!token) {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Invalid or expired token");
+  }
 
-      next();
-    } catch (error) {
-      next(new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized"));
-    }
-  } else {
-    next(new ApiError(StatusCodes.FORBIDDEN, "No token provided."));
+  //verify token
+  try {
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = decode;
+    next();
+  } catch (error) {
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    next(new ApiError(statusCode, error.message));
   }
 };
 
-module.exports = auth;
+module.exports = authMiddleware;

@@ -1,10 +1,8 @@
 require("dotenv").config();
 
-const mongoose = require("mongoose");
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const saltRounds = 10;
 
 const User = require("../models/User");
 const ApiError = require("../../utils/ApiError");
@@ -15,8 +13,9 @@ class AuthController {
   async register(req, res, next) {
     try {
       const { email, password, name } = req.body;
-
+      
       // hash password
+      const saltRounds = parseInt(process.env.BCRYPT_SALT)
       const hashPassword = await bcrypt.hash(password, saltRounds);
 
       // create instance
@@ -34,8 +33,8 @@ class AuthController {
         saveUser
       );
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 
@@ -44,53 +43,49 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
-      const user = await User.findOne({ email: email });
+      const user = await User.findOne({ email: email }).select("+password");
 
-      if (user) {
-        // compare password
-        const isMatchPassword = bcrypt.compare(password, user.password);
-        if (!isMatchPassword) {
-          next(
-            new ApiError(
-              StatusCodes.UNAUTHORIZED,
-              "Email or password is incorrect"
-            )
-          );
-        } else {
-          const payload = {
-            email: user.email,
-            name: user.name,
-          };
-          const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: process.env.JWT_EXPIRE,
-          });
-          
-          const resData = {
-            accessToken,
-            user: {
-              name: user.name,
-              email: user.email,
-            },
-          };
-
-          ApiResponse.success(
-            res,
-            StatusCodes.OK,
-            "Login successful",
-            resData
-          );
-        }
-      } else {
-        next(
-          new ApiError(
-            StatusCodes.UNAUTHORIZED,
-            "Email or password is incorrect"
-          )
+      // khong tim thấy user
+      if (!user) {
+        throw new ApiError(
+          StatusCodes.UNAUTHORIZED,
+          "Email or password is incorrect"
         );
       }
+
+      // compare password
+      const isMatchPassword = await bcrypt.compare(password, user.password);
+      if (!isMatchPassword) {
+        throw new ApiError(
+          StatusCodes.UNAUTHORIZED,
+          "Email or password is incorrect"
+        );
+      } else {
+        const payload = {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
+        const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+          expiresIn: process.env.JWT_EXPIRE,
+        });
+
+        const resData = {
+          accessToken,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+        };
+
+        ApiResponse.success(res, StatusCodes.OK, "Login successful", resData);
+      }
     } catch (error) {
-      const errMessage = new Error(error).message;
-      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, errMessage));
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
     }
   }
 }
