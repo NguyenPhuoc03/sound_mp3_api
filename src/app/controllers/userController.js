@@ -48,9 +48,13 @@ class UserController {
         throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
       }
 
-      await User.findByIdAndDelete(userId);
+      const result = await User.findByIdAndDelete(userId);
 
-      ApiResponse.success(res, StatusCodes.OK, "Deleted successfully", null);
+      if (result.deletedCount === 0) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Cannot be deleted");
+      }
+
+      ApiResponse.success(res, StatusCodes.OK, "Deleted successfully", result);
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
       next(new ApiError(statusCode, error.message));

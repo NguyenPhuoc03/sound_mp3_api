@@ -98,13 +98,17 @@ class ArtistController {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid artist ID");
       }
 
-      await Artist.findByIdAndDelete(artistId);
+      const result = await Artist.findByIdAndDelete(artistId);
+
+      if (result.deletedCount === 0) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Cannot be deleted");
+      }
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Artist deleted successfully",
-        null
+        result
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

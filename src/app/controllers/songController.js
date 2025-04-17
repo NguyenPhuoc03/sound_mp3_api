@@ -66,6 +66,55 @@ class SongController {
     }
   }
 
+  //! [GET] /artist/:artistId/songs
+  async getSongByArtistId(req, res, next) {
+    try {
+      const { artistId } = req.params;
+
+      // validate songId
+      if (!mongoose.Types.ObjectId.isValid(artistId)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid artist ID");
+      }
+
+      const songs = await Song.find({ artists: artistId })
+
+      ApiResponse.success(
+        res,
+        StatusCodes.OK,
+        "Get song by artist id successfully",
+        songs
+      );
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
+
+  //! [GET] /album/:albumId/songs
+  async getSongByArtistId(req, res, next) {
+    try {
+      const { albumId } = req.params;
+
+      // validate songId
+      if (!mongoose.Types.ObjectId.isValid(albumId)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID");
+      }
+
+      const songs = await Song.find({ album: albumId })
+
+      ApiResponse.success(
+        res,
+        StatusCodes.OK,
+        "Get song by album id successfully",
+        songs
+      );
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
+  
+
   //! [PATCH] /song/:songId
   async updateSongById(req, res, next) {
     try {
@@ -98,13 +147,17 @@ class SongController {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID");
       }
 
-      await Song.findByIdAndDelete(songId);
+      const result = await Song.findByIdAndDelete(songId);
+
+      if (result.deletedCount === 0) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Cannot be deleted");
+      }
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Song deleted successfully",
-        null
+        result
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

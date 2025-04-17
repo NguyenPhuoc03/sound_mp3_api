@@ -98,13 +98,17 @@ class AlbumController {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID");
       }
 
-      await Album.findByIdAndDelete(albumId);
+      const result = await Album.findByIdAndDelete(albumId);
+
+      if (result.deletedCount === 0) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Cannot be deleted");
+      }
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Album deleted successfully",
-        null
+        result
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

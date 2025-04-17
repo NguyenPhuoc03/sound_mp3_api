@@ -18,6 +18,7 @@ const authMiddleware = (req, res, next) => {
     const decode = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decode;
+    console.log(req.user);
     next();
   } catch (error) {
     const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
