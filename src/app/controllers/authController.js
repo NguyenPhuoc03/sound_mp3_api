@@ -30,7 +30,7 @@ class AuthController {
         res,
         StatusCodes.CREATED,
         "New account created successfully",
-        saveUser
+        null
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

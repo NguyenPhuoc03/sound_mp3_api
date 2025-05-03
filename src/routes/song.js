@@ -8,6 +8,8 @@ const permissionMiddleware = require("../middlewares/permissionMiddleware"); // 
 router.get("/get-all", songController.getSongs);
 router.get("/:songId", songController.getSongById);
 router.get("/:artistId", songController.getSongByArtistId);
+router.post("/:songId/like", songController.likeSong);
+router.post("/:songId/unlike", songController.unlikeSong);
 
 router.post("/create", permissionMiddleware, songController.createSong);
 router.patch("/:songId", permissionMiddleware, songController.updateSongById);

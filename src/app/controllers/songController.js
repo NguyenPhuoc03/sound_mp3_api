@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { StatusCodes } = require("http-status-codes");
 
 const Song = require("../models/Song");
+const User = require("../models/User");
 const ApiError = require("../../utils/ApiError");
 const ApiResponse = require("../../utils/ApiResponse");
 
@@ -28,13 +29,22 @@ class SongController {
   //! [GET] /song/get-all
   async getSongs(req, res, next) {
     try {
-      const songs = await Song.find({});
+      const songs = await Song.find({}).populate({
+        path: "artists",
+        select: "name -_id",
+      });
+
+      // Chuyển artists thành mảng chuỗi tên
+    const simplifiedSongs = songs.map(song => ({
+      ...song.toObject(),
+      artists: song.artists.map(artist => artist.name) // Lấy tên nghệ sĩ
+    }));
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Get list of songs successfully",
-        songs
+        simplifiedSongs
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -76,7 +86,7 @@ class SongController {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid artist ID");
       }
 
-      const songs = await Song.find({ artists: artistId })
+      const songs = await Song.find({ artists: artistId });
 
       ApiResponse.success(
         res,
@@ -91,7 +101,7 @@ class SongController {
   }
 
   //! [GET] /album/:albumId/songs
-  async getSongByArtistId(req, res, next) {
+  async getSongByAlbumId(req, res, next) {
     try {
       const { albumId } = req.params;
 
@@ -100,7 +110,7 @@ class SongController {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID");
       }
 
-      const songs = await Song.find({ album: albumId })
+      const songs = await Song.find({ album: albumId });
 
       ApiResponse.success(
         res,
@@ -113,7 +123,6 @@ class SongController {
       next(new ApiError(statusCode, error.message));
     }
   }
-  
 
   //! [PATCH] /song/:songId
   async updateSongById(req, res, next) {
@@ -158,6 +167,93 @@ class SongController {
         StatusCodes.OK,
         "Song deleted successfully",
         result
+      );
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
+
+  //! [POST] /song/:songId/like
+  async likeSong(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { songId } = req.params;
+
+      // validate songId
+      if (!mongoose.Types.ObjectId.isValid(songId)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID");
+      }
+
+      const song = await Song.findById(songId);
+      const user = await User.findById(userId);
+
+      //kiem tra ton tai song hay user khong
+      if (!song || !user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "User or Song not found");
+      }
+
+      // kiem tra da like chua
+      if (user.likedSongs.includes(songId)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Song already liked");
+      }
+
+      // thuc hien like
+      user.likedSongs.push(songId);
+      await user.save();
+
+      // Tăng lượt like
+      song.interested += 1;
+      await song.save();
+
+      ApiResponse.success(res, StatusCodes.OK, "Like song successfully", null);
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
+
+  //! [POST] /song/:songId/unlike
+  async unlikeSong(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { songId } = req.params;
+
+      // validate songId
+      if (!mongoose.Types.ObjectId.isValid(songId)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID");
+      }
+
+      const song = await Song.findById(songId);
+      const user = await User.findById(userId);
+
+      //kiem tra ton tai song hay user khong
+      if (!song || !user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "User or Song not found");
+      }
+
+      // kiem tra co like khong
+      const indexSong = user.likedSongs.indexOf(songId);
+      if (indexSong === -1) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "Song has not been liked yet"
+        );
+      }
+
+      // thuc hien like
+      user.likedSongs.splice(indexSong, 1);
+      await user.save();
+
+      // Tăng lượt like, tranh bi am
+      song.interested = Math.max(song.interested - 1, 0);
+      await song.save();
+
+      ApiResponse.success(
+        res,
+        StatusCodes.OK,
+        "Unlike song successfully",
+        null
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
