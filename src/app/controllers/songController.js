@@ -35,10 +35,10 @@ class SongController {
       });
 
       // Chuyển artists thành mảng chuỗi tên
-    const simplifiedSongs = songs.map(song => ({
-      ...song.toObject(),
-      artists: song.artists.map(artist => artist.name) // Lấy tên nghệ sĩ
-    }));
+      const simplifiedSongs = songs.map((song) => ({
+        ...song.toObject(),
+        artists: song.artists.map((artist) => artist.name), // Lấy tên nghệ sĩ
+      }));
 
       ApiResponse.success(
         res,
@@ -86,13 +86,22 @@ class SongController {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid artist ID");
       }
 
-      const songs = await Song.find({ artists: artistId });
+      const songs = await Song.find({ artists: artistId }).populate({
+        path: "artists",
+        select: "name -_id",
+      });
+
+      // Chuyển artists thành mảng chuỗi tên
+      const simplifiedSongs = songs.map((song) => ({
+        ...song.toObject(),
+        artists: song.artists.map((artist) => artist.name), // Lấy tên nghệ sĩ
+      }));
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Get song by artist id successfully",
-        songs
+        simplifiedSongs
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -110,13 +119,22 @@ class SongController {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid album ID");
       }
 
-      const songs = await Song.find({ album: albumId });
+      const songs = await Song.find({ album: albumId }).populate({
+        path: "artists",
+        select: "name -_id",
+      });
+
+      // Chuyển artists thành mảng chuỗi tên
+      const simplifiedSongs = songs.map((song) => ({
+        ...song.toObject(),
+        artists: song.artists.map((artist) => artist.name), // Lấy tên nghệ sĩ
+      }));
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Get song by album id successfully",
-        songs
+        simplifiedSongs
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

@@ -6,7 +6,7 @@ const songController = require("../app/controllers/songController");
 const permissionMiddleware = require("../middlewares/permissionMiddleware"); // phân quyền
 
 router.get("/get-all", albumController.getAlbums);
-router.get("/:albumId/songs", songController.getSongByArtistId);
+router.get("/:albumId/songs", songController.getSongByAlbumId);
 router.get("/:albumId", albumController.getAlbumById);
 
 router.post("/create", permissionMiddleware, albumController.createAlbum);
