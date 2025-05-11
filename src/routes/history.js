@@ -9,7 +9,7 @@ const permissionMiddleware = require("../middlewares/permissionMiddleware"); // 
 router.post("/create", historyController.createHistorySong);
 router.delete("/:historyId", historyController.deleteHistorySong);
 
-router.get("/", historyController.getHistorySongs);
+router.get("/get-all", historyController.getHistorySongs);
 
 // router.patch("/:songId", permissionMiddleware, songController.updateSongById);
 
