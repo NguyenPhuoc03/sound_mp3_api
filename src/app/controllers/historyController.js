@@ -16,6 +16,17 @@ class HistoryController {
     try {
       const { id } = req.user;
       const { song } = req.body;
+
+      const last = await History.findOne({ user: id }).sort({ createdAt: -1 });
+
+      if (last && last.song.toString() === song) {
+        return ApiResponse.success(
+          res,
+          StatusCodes.OK,
+          "No need to add duplicate song history",
+          last
+        );
+      }
       const newHistory = new History({
         user: id,
         song: song,
