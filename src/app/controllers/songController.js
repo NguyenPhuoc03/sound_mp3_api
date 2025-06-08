@@ -192,6 +192,37 @@ class SongController {
     }
   }
 
+  //! [GET] /song/:songId/isLiked
+  async isSongLiked(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { songId } = req.params;
+
+      // Validate songId
+      if (!mongoose.Types.ObjectId.isValid(songId)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid song ID");
+      }
+
+      const user = await User.findById(userId);
+
+      if (!user) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+      }
+
+      const isLiked = user.likedSongs.includes(songId);
+
+      ApiResponse.success(
+        res,
+        StatusCodes.OK,
+        "Check like status successfully",
+        isLiked
+      );
+    } catch (error) {
+      const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+      next(new ApiError(statusCode, error.message));
+    }
+  }
+
   //! [POST] /song/:songId/like
   async likeSong(req, res, next) {
     try {
