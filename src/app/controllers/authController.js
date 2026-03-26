@@ -24,6 +24,7 @@ class AuthController {
         password: hashPassword,
         name: name,
       });
+
       const saveUser = await newUser.save();
 
       ApiResponse.success(

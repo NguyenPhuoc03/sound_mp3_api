@@ -11,7 +11,7 @@ const validateEmail = async (req, res, next) => {
     return next(
       new ApiError(
         StatusCodes.BAD_REQUEST,
-        "Please enter a valid email address."
+        "Please enter a valid email address. 222"
       )
     );
   }

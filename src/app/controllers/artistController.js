@@ -5,12 +5,14 @@ const Artist = require("../models/Artist");
 const User = require("../models/User");
 const ApiError = require("../../utils/ApiError");
 const ApiResponse = require("../../utils/ApiResponse");
+const { removeVietnameseTones } = require("../../utils/stringHandler");
 
 class ArtistController {
   //! [POST] /artist/create
   async createArtist(req, res, next) {
     try {
       const insertData = req.body;
+      insertData.name_unsigned = removeVietnameseTones(insertData.name);
       const artist = new Artist(insertData);
       await artist.save();
 
@@ -18,13 +20,40 @@ class ArtistController {
         res,
         StatusCodes.CREATED,
         "Create successful artist",
-        artist
+        artist,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
       next(new ApiError(statusCode, error.message));
     }
   }
+
+  findOrCreateArtists = async (artistNames) => {
+    const artistIds = [];
+
+    for (let name of artistNames) {
+      name = name.trim();
+      if (!name) continue;
+
+      let artist = await Artist.findOne({
+        name: { $regex: new RegExp(`^${name}$`, "i") },
+      });
+
+      if (!artist) {
+        artist = new Artist({
+          name: name,
+          name_unsigned: removeVietnameseTones(name),
+          avatar:
+            "https://nads.1cdn.vn/2024/11/22/74da3f39-759b-4f08-8850-4c8f2937e81a-1_mangeshdes.png",
+        });
+        await artist.save();
+      }
+
+      artistIds.push(artist._id);
+    }
+
+    return artistIds;
+  };
 
   //! [GET] /artist/get-all
   async getArtists(req, res, next) {
@@ -35,7 +64,7 @@ class ArtistController {
         res,
         StatusCodes.OK,
         "Get list of artists successfully",
-        artists
+        artists,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -59,7 +88,7 @@ class ArtistController {
         res,
         StatusCodes.OK,
         "Get artist by id successfully",
-        artist
+        artist,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -109,7 +138,7 @@ class ArtistController {
         res,
         StatusCodes.OK,
         "Artist deleted successfully",
-        result
+        result,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -149,7 +178,12 @@ class ArtistController {
       artist.interested += 1;
       await artist.save();
 
-      ApiResponse.success(res, StatusCodes.OK, "Follow artist successfully", null);
+      ApiResponse.success(
+        res,
+        StatusCodes.OK,
+        "Follow artist successfully",
+        null,
+      );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
       next(new ApiError(statusCode, error.message));
@@ -179,7 +213,7 @@ class ArtistController {
       if (indexArtist === -1) {
         throw new ApiError(
           StatusCodes.BAD_REQUEST,
-          "Artist has not been followed yet"
+          "Artist has not been followed yet",
         );
       }
 
@@ -195,7 +229,7 @@ class ArtistController {
         res,
         StatusCodes.OK,
         "Unfollow artist successfully",
-        null
+        null,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const songController = require("../app/controllers/songController");
+const upload = require("../middlewares/upload");
 const permissionMiddleware = require("../middlewares/permissionMiddleware"); // phân quyền
-
 
 router.get("/get-all", songController.getSongs);
 router.get("/:songId", songController.getSongById);

@@ -3,9 +3,15 @@ const express = require("express");
 const cors = require('cors');
 const bodyParser = require("body-parser");
 const app = express();
+// app.use(cors({
+//   methods: ['GET', 'POST', 'OPTIONS'], // Chấp nhận các phương thức GET, POST và OPTIONS (preflight)
+//   allowedHeaders: ['Content-Type'], // Header yêu cầu
+// }));
+
 app.use(cors({
-  methods: ['GET', 'POST', 'OPTIONS'], // Chấp nhận các phương thức GET, POST và OPTIONS (preflight)
-  allowedHeaders: ['Content-Type'], // Header yêu cầu
+  origin: "*",
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'], // 🔥 thêm dòng này
 }));
 const db = require("./config/db/connectDatabase");
 

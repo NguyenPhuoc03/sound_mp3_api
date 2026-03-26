@@ -13,6 +13,8 @@ const Song = new Schema(
     source: { type: String, required: true },
     title: { type: String, required: true },
     releaseDate: { type: String },
+    title_unsigned: { type: String },
+
   },
   {
     timestamps: true,

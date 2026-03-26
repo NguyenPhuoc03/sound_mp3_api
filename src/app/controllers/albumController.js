@@ -17,7 +17,7 @@ class AlbumController {
         res,
         StatusCodes.CREATED,
         "Create successful album",
-        newAlbum
+        newAlbum,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -34,7 +34,7 @@ class AlbumController {
         res,
         StatusCodes.OK,
         "Get list of albums successfully",
-        albums
+        albums,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -58,7 +58,7 @@ class AlbumController {
         res,
         StatusCodes.OK,
         "Get album by id successfully",
-        album
+        album,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -108,7 +108,7 @@ class AlbumController {
         res,
         StatusCodes.OK,
         "Album deleted successfully",
-        result
+        result,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

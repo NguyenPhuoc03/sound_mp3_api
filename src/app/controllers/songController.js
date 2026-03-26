@@ -3,22 +3,64 @@ const { StatusCodes } = require("http-status-codes");
 
 const Song = require("../models/Song");
 const User = require("../models/User");
+const Album = require("../models/Album");
+const ArtistController = require("./artistController");
 const ApiError = require("../../utils/ApiError");
 const ApiResponse = require("../../utils/ApiResponse");
+const { formatSongResponse } = require("../../utils/responseSongFormatter");
+const { removeVietnameseTones } = require("../../utils/stringHandler");
 
 class SongController {
   //! [POST] /song/create
   async createSong(req, res, next) {
     try {
       const insertData = req.body;
+      // audioUrl, imageUrl, title, artist, album, duration, releaseDate
+      if (insertData.title) {
+        insertData.title_unsigned = removeVietnameseTones(insertData.title);
+      }
+
+      // Artist
+      let artistNames = insertData.artists;
+      if (typeof artistNames === "string") {
+        artistNames = artistNames.split(",").map((name) => name.trim());
+      }
+
+      if (artistNames && Array.isArray(artistNames)) {
+        insertData.artists =
+          await ArtistController.findOrCreateArtists(artistNames);
+      }
+
+      //Album
+      if (insertData.album && insertData.album.trim() !== "") {
+        const albumName = insertData.album.trim();
+
+        // Chỉ TÌM, không TẠO MỚI
+        const existingAlbum = await Album.findOne({
+          title: { $regex: new RegExp(`^${albumName}$`, "i") },
+        });
+
+        if (existingAlbum) {
+          insertData.album = existingAlbum._id; 
+        } else {
+          delete insertData.album;
+        }
+      } else {
+        delete insertData.album;
+      }
+
+      //duration
+      insertData.duration = insertData.duration || 0;
+
+      //  Database
       const newSong = new Song(insertData);
       await newSong.save();
 
       ApiResponse.success(
         res,
         StatusCodes.CREATED,
-        "Create successful song",
-        newSong
+        "Tạo bài hát thành công bằng link đã upload!",
+        newSong,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -35,16 +77,18 @@ class SongController {
       });
 
       // Chuyển artists thành mảng chuỗi tên
-      const simplifiedSongs = songs.map((song) => ({
-        ...song.toObject(),
-        artists: song.artists.map((artist) => artist.name), // Lấy tên nghệ sĩ
-      }));
+      // const simplifiedSongs = songs.map((song) => ({
+      //   ...song.toObject(),
+      //   artists: song.artists.map((artist) => artist.name), // Lấy tên nghệ sĩ
+      // }));
+
+      const simplifiedSongs = songs.map(formatSongResponse);
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Get list of songs successfully",
-        simplifiedSongs
+        simplifiedSongs,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -68,7 +112,7 @@ class SongController {
         res,
         StatusCodes.OK,
         "Get song by id successfully",
-        song
+        song,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -91,17 +135,13 @@ class SongController {
         select: "name -_id",
       });
 
-      // Chuyển artists thành mảng chuỗi tên
-      const simplifiedSongs = songs.map((song) => ({
-        ...song.toObject(),
-        artists: song.artists.map((artist) => artist.name), // Lấy tên nghệ sĩ
-      }));
+      const simplifiedSongs = songs.map(formatSongResponse);
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Get song by artist id successfully",
-        simplifiedSongs
+        simplifiedSongs,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -124,17 +164,13 @@ class SongController {
         select: "name -_id",
       });
 
-      // Chuyển artists thành mảng chuỗi tên
-      const simplifiedSongs = songs.map((song) => ({
-        ...song.toObject(),
-        artists: song.artists.map((artist) => artist.name), // Lấy tên nghệ sĩ
-      }));
+      const simplifiedSongs = songs.map(formatSongResponse);
 
       ApiResponse.success(
         res,
         StatusCodes.OK,
         "Get song by album id successfully",
-        simplifiedSongs
+        simplifiedSongs,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -184,7 +220,7 @@ class SongController {
         res,
         StatusCodes.OK,
         "Song deleted successfully",
-        result
+        result,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -215,7 +251,7 @@ class SongController {
         res,
         StatusCodes.OK,
         "Check like status successfully",
-        isLiked
+        isLiked,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -286,7 +322,7 @@ class SongController {
       if (indexSong === -1) {
         throw new ApiError(
           StatusCodes.BAD_REQUEST,
-          "Song has not been liked yet"
+          "Song has not been liked yet",
         );
       }
 
@@ -302,7 +338,7 @@ class SongController {
         res,
         StatusCodes.OK,
         "Unlike song successfully",
-        null
+        null,
       );
     } catch (error) {
       const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;

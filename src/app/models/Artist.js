@@ -6,6 +6,7 @@ const Artist = new Schema(
     avatar: { type: String, required: true },
     interested: { type: Number, min: 0 },
     name: { type: String },
+    name_unsigned: { type: String },
   },
   {
     timestamps: true,
